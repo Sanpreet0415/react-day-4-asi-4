@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Template</title>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+  <script src="https://www.unpkg.com/react@18.2.0/umd/react.development.js"></script>
+  <script src="https://www.unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+  
+    function App() {
+      const [todos, setTodos] = useState([]);
+      const [newTask, setNewTask] = useState({ title: '', isCompleted: false, assignee: '' });
+      const [showIncomplete, setShowIncomplete] = useState(false);
+      const [filterAssignee, setFilterAssignee] = useState('');
+  
+      useEffect(() => {
+        getAllTasks();
+      }, []);
+  
+      // Function to fetch all tasks from server
+      const getAllTasks = async () => {
+        try {
+          const response = await axios.get('http://localhost:3000/'); // Replace <port-number> with your JSON Server port
+          setTodos(response.data);
+        } catch (error) {
+          console.error('Error fetching data:', error);
+        }
+      };
+  
+      // Function to add a new task
+      const addTask = async () => {
+        try {
+          await axios.post('http://localhost:3000/', newTask); // Replace <port-number> with your JSON Server port
+          setNewTask({ title: '', isCompleted: false, assignee: '' });
+          getAllTasks();
+        } catch (error) {
+          console.error('Error adding task:', error);
+        }
+      };
+  
+      // Function to update an existing task
+      const updateTask = async (id, updatedTask) => {
+        try {
+          await axios.put(`http://localhost:3000/${id}`, updatedTask); // Replace <port-number> with your JSON Server port
+          getAllTasks();
+        } catch (error) {
+          console.error('Error updating task:', error);
+        }
+      };
+  
+      // Function to delete a task
+      const deleteTask = async (id) => {
+        try {
+          await axios.delete(`http://localhost:<port-number>/todos/${id}`); // Replace <port-number> with your JSON Server port
+          getAllTasks();
+        } catch (error) {
+          console.error('Error deleting task:', error);
+        }
+      };
+  
+      // Function to filter incomplete tasks
+      const filterIncompleteTasks = () => {
+        setShowIncomplete(true);
+      };
+  
+      // Function to clear filters
+      const clearFilters = () => {
+        setShowIncomplete(false);
+        setFilterAssignee('');
+      };
+  
+      // Rendering logic
+      return (
+        <div>
+          <h1>Advanced Task Manager</h1>
+          <div>
+            <label>Title:</label>
+            <input type="text" value={newTask.title} onChange={(e) => setNewTask({ ...newTask, title: e.target.value })} />
+            <label>Assignee:</label>
+            <input type="text" value={newTask.assignee} onChange={(e) => setNewTask({ ...newTask, assignee: e.target.value })} />
+            <button onClick={addTask}>Add Task</button>
+          </div>
+  
+          <button onClick={getAllTasks}>Get All Tasks</button>
+          <button onClick={filterIncompleteTasks}>Show Incomplete Tasks</button>
+          <button onClick={clearFilters}>Clear Filters</button>
+  
+          <ul>
+            {todos.map((todo) => (
+              <li key={todo.id}>
+                <input type="text" value={todo.title} onChange={(e) => updateTask(todo.id, { ...todo, title: e.target.value })} />
+                <input type="checkbox" checked={todo.isCompleted} onChange={(e) => updateTask(todo.id, { ...todo, isCompleted: e.target.checked })} />
+                <input type="text" value={todo.assignee} onChange={(e) => updateTask(todo.id, { ...todo, assignee: e.target.value })} />
+                <button onClick={() => deleteTask(todo.id)}>Delete</button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
+  
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+  
+</html>
